@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Excel → Google Sheets Converter (Offline)</title>
+  <meta name="description" content="Convert Excel .xlsx and .xls files offline — preview data and export as CSV, XLSX, HTML or JSON. No internet required." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Animated background -->
+  <div class="bg-gradient" aria-hidden="true"></div>
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-2" aria-hidden="true"></div>
+  <div class="orb orb-3" aria-hidden="true"></div>
+
+  <main class="app-wrapper" role="main">
+
+    <!-- ── Header ── -->
+    <header class="app-header">
+      <div class="logo-row">
+        <div class="logo-icon" aria-hidden="true">📊</div>
+        <h1 class="app-title">Excel → Google Sheets</h1>
+      </div>
+      <p class="app-subtitle">Upload any Excel file to preview and export — works completely offline</p>
+      <div class="offline-badge">
+        <span class="offline-dot" aria-hidden="true"></span>
+        Offline Mode — No Internet Required
+      </div>
+    </header>
+
+    <!-- ── Step 1: Upload ── -->
+    <div class="glass-card">
+      <div class="section-title">📂 Upload Excel File</div>
+
+      <div
+        class="upload-zone"
+        id="dropZone"
+        role="button"
+        tabindex="0"
+        aria-label="Drop Excel file here or click to browse"
+        onkeydown="if(event.key==='Enter'||event.key===' ')this.click()"
+      >
+        <span class="upload-icon" aria-hidden="true">📥</span>
+        <p class="upload-title">Drop your Excel file here</p>
+        <p class="upload-sub">or click to browse your files</p>
+        <div class="file-types">
+          <span class="file-badge">.XLSX</span>
+          <span class="file-badge">.XLS</span>
+          <span class="file-badge">.ODS</span>
+        </div>
+      </div>
+
+      <input
+        type="file"
+        id="fileInput"
+        accept=".xlsx,.xls,.ods,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        style="display:none"
+        aria-hidden="true"
+      />
+
+      <!-- File info -->
+      <div class="file-info-card" id="fileInfoCard" style="display:none" role="status" aria-live="polite">
+        <span class="file-icon-sm" aria-hidden="true">📄</span>
+        <div class="file-meta">
+          <div class="file-name" id="fileName">—</div>
+          <div class="file-size" id="fileSize">—</div>
+        </div>
+        <button class="btn-clear" id="btnClearFile" aria-label="Remove file">✕ Remove</button>
+      </div>
+
+      <!-- Progress bar (shown during parse) -->
+      <div class="progress-bar-wrap" id="progressWrap" role="status" aria-live="polite">
+        <div class="progress-label">
+          <span id="progressStatus">Processing…</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Step 2: Preview ── -->
+    <div class="glass-card" id="previewPanel">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+        <div class="section-title" style="margin:0;">👁️ Data Preview</div>
+        <div class="preview-meta">
+          <span>📋 <strong id="previewSheetCount">—</strong></span>
+          <span>📏 <strong id="previewRowCount">—</strong></span>
+          <span>📐 <strong id="previewColCount">—</strong></span>
+        </div>
+      </div>
+      <div class="sheet-tabs" id="sheetTabs" role="tablist" aria-label="Sheet tabs"></div>
+      <!-- Toolbar: wrap toggle + column width selector -->
+      <div class="table-toolbar" id="tableToolbar" aria-label="Table display options"></div>
+      <div class="table-wrapper" id="tableContainer" role="region" aria-label="Sheet data"></div>
+      <div class="info-box info-box-green" style="margin-top:14px;">
+        💡 Showing up to 50 rows as preview. <strong>All rows</strong> are included in every export. Hover any cell to see full content. Use <strong>Wrap OFF/ON</strong> above to toggle text wrapping.
+      </div>
+    </div>
+
+    <!-- ── Step 3: Export ── -->
+    <div class="glass-card export-panel" id="exportPanel">
+      <div class="section-title">⬇️ Export Your Data</div>
+
+      <!-- Main export options grid -->
+      <div class="export-grid">
+
+        <!-- XLSX Re-export -->
+        <button class="export-card green" id="btnExportXLSX" aria-label="Download as Excel XLSX">
+          <span class="export-icon">📗</span>
+          <div class="export-title">Excel (.xlsx)</div>
+          <div class="export-desc">All sheets in one file. Open directly in Google Sheets via File → Import.</div>
+          <span class="export-badge">Recommended</span>
+        </button>
+
+        <!-- All CSV -->
+        <button class="export-card blue" id="btnExportAllCSV" aria-label="Download all sheets as CSV">
+          <span class="export-icon">📊</span>
+          <div class="export-title">All Sheets as CSV</div>
+          <div class="export-desc">Downloads one CSV file per sheet. Universal format, works everywhere.</div>
+          <span class="export-badge">All sheets</span>
+        </button>
+
+        <!-- HTML viewer -->
+        <button class="export-card purple" id="btnExportHTML" aria-label="Download as HTML viewer">
+          <span class="export-icon">🌐</span>
+          <div class="export-title">HTML Viewer</div>
+          <div class="export-desc">Self-contained HTML file. Open in any browser to view the data beautifully.</div>
+          <span class="export-badge">Offline viewable</span>
+        </button>
+
+        <!-- JSON -->
+        <button class="export-card yellow" id="btnExportJSON" aria-label="Download as JSON">
+          <span class="export-icon">📦</span>
+          <div class="export-title">JSON</div>
+          <div class="export-desc">Structured JSON with headers as keys. Ideal for developers and APIs.</div>
+          <span class="export-badge">Developer friendly</span>
+        </button>
+
+        <!-- PDF -->
+        <button class="export-card red" id="btnExportPDF" aria-label="Download as PDF">
+          <span class="export-icon">📄</span>
+          <div class="export-title">PDF Document</div>
+          <div class="export-desc">Formatted PDF with cover page, all sheets, headers repeated per page &amp; page numbers. No data lost.</div>
+          <span class="export-badge">Print ready</span>
+        </button>
+
+      </div>
+
+      <hr class="divider" />
+
+      <!-- Per-sheet CSV downloads -->
+      <div class="section-title">📋 Download Individual Sheets as CSV</div>
+      <div class="sheet-export-list" id="sheetExportList"></div>
+
+      <div class="info-box info-box-blue" style="margin-top:20px;">
+        🚀 <strong>To import into Google Sheets:</strong> Download the <strong>.xlsx</strong> file above →
+        Open <a href="https://sheets.new" target="_blank" rel="noopener" style="color:#93c5fd;">sheets.new</a> →
+        File → Import → Upload the .xlsx file. Done!
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>📴 Running 100% offline &bull; Powered by <strong>SheetJS</strong> (local) &bull; No data leaves your device</p>
+    </footer>
+
+  </main>
+
+  <!-- Toast notifications -->
+  <div class="toast-container" id="toastContainer" role="log" aria-live="polite" aria-label="Notifications"></div>
+
+  <!-- ── Scripts (all local, no CDN) ── -->
+  <script src="libs/xlsx.full.min.js"></script>
+  <script src="libs/jspdf.umd.min.js"></script>
+  <script src="libs/jspdf.plugin.autotable.min.js"></script>
+  <script src="excel-parser.js"></script>
+  <script src="export-engine.js"></script>
+  <script src="app.js"></script>
+
+
+
+</body>
+</html>
