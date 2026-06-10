@@ -76,7 +76,7 @@ The easiest way is to use VS Code with the **Live Server** extension:
 Alternatively, use Python's built-in server:
 
 ```bash
-cd "c:\Users\IN11867\Documents\Ecxcel Convo"
+cd "path"
 python -m http.server 8080
 # Open: http://localhost:8080
 ```
